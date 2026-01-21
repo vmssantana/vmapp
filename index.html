@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>VMAPP • BRA</title>
+
+  <link rel="stylesheet" href="./css/app.css" />
+
+  <!-- XLSX opcional (se você for usar import Excel depois) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <div class="row">
+        <div class="brand">
+          <div class="dot"></div>
+          <div>
+            <div class="title">VMAPP</div>
+            <div class="subtitle">Gestão de Frequência e Postos • BRA</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;align-items:center">
+          <span id="authState" class="subtitle">Desconectado</span>
+          <button id="btnLogin" class="btn primary" style="width:auto">Entrar</button>
+          <button id="btnLogout" class="btn" style="display:none;width:auto">Sair</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="grid">
+      <aside class="card">
+        <div class="menu">
+          <h2>Módulos</h2>
+          <button class="btn" data-view="dashboard">Dashboard</button>
+          <button class="btn" data-view="colaboradores">Colaboradores</button>
+          <button class="btn" data-view="postos">Postos de Trabalho</button>
+          <button class="btn" data-view="ocorrencias">Ocorrências/Afastamentos</button>
+          <button class="btn" data-view="importacao">Importação/Exportação</button>
+          <button class="btn" data-view="relatorios">Relatórios</button>
+        </div>
+      </aside>
+
+      <section class="card">
+        <div class="content">
+
+          <!-- DASHBOARD -->
+          <section id="view-dashboard" class="view">
+            <h1 class="h1">Dashboard</h1>
+
+            <div class="kpis">
+              <div class="kpi">
+                <div class="label">Colaboradores ativos</div>
+                <div class="value" id="kpiColab">—</div>
+              </div>
+              <div class="kpi">
+                <div class="label">Postos preenchidos</div>
+                <div class="value" id="kpiPostosOk">—</div>
+              </div>
+              <div class="kpi">
+                <div class="label">Afastamentos vencendo (7 dias)</div>
+                <div class="value" id="kpiAlertas">—</div>
+              </div>
+            </div>
+
+            <div class="section">
+              <h2>Alertas</h2>
+              <table class="table" id="tblAlertas">
+                <thead>
+                  <tr>
+                    <th>Colaborador</th>
+                    <th>Posto</th>
+                    <th>Motivo</th>
+                    <th>Fim</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+              <div class="footer-note">Alertas com término nos próximos 7 dias.</div>
+            </div>
+          </section>
+
+          <!-- COLABORADORES -->
+          <section id="view-colaboradores" class="view" style="display:none">
+            <h1 class="h1">Colaboradores</h1>
+
+            <input type="hidden" id="cId" />
+
+            <div class="form-grid">
+              <div class="field">
+                <label>Matrícula (4)</label>
+                <input id="cMatricula" maxlength="4" placeholder="0000" />
+              </div>
+
+              <div class="field span-2">
+                <label>Nome</label>
+                <input id="cNome" placeholder="Nome completo" />
+              </div>
+
+              <div class="field">
+                <label>CPF</label>
+                <input id="cCpf" placeholder="Somente números" />
+              </div>
+
+              <div class="field">
+                <label>Sexo</label>
+                <select id="cSexo">
+                  <option value="M">M</option>
+                  <option value="F">F</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label>Profissão</label>
+                <select id="cProfissao">
+                  <option value="">Selecione...</option>
+                  <option>AUXILIAR EM SAUDE BUCAL</option>
+                  <option>ENCARREGADO</option>
+                  <option>LIDER</option>
+                  <option>SERVENTE</option>
+                  <option>PEDAGOGO</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label>Posto (nome)</label>
+                <select id="cPostoNome">
+                  <option value="">Selecione...</option>
+                  <option>AUXILIAR EM SAUDE BUCAL</option>
+                  <option>ENCARREGADO</option>
+                  <option>LIDER</option>
+                  <option>SERVENTE</option>
+                  <option>PEDAGOGO</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label>Nr Posto</label>
+                <input id="cNrPosto" type="number" min="1" placeholder="100" />
+              </div>
+
+              <div class="field span-2">
+                <label>ID.Posto (auto)</label>
+                <input id="cIdPosto" disabled />
+              </div>
+
+              <div class="field">
+                <label>Lotação</label>
+                <select id="cLotacao">
+                  <option value="">Carregando...</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label>Admissão</label>
+                <input id="cAdmissao" type="date" />
+              </div>
+
+              <div class="field">
+                <label>Ocupação</label>
+                <select id="cOcupacao">
+                  <option>TITULAR</option>
+                  <option>VOLANTE</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label>CTPS (auto)</label>
+                <input id="cCtps" disabled />
+              </div>
+
+              <div class="field">
+                <label>Série CTPS (auto)</label>
+                <input id="cSerie" disabled />
+              </div>
+            </div>
+
+            <div class="actions">
+              <button class="btn primary" id="btnSalvarColab">Salvar (RPC)</button>
+              <button class="btn" id="btnAlterarColab">Alterar</button>
+              <button class="btn" id="btnExcluirColab">Excluir</button>
+              <button class="btn" id="btnBuscarColabPorCpf">Buscar por CPF (RPC)</button>
+              <button class="btn" id="btnListarColab">Listar</button>
+            </div>
+	     <div id="msgColab" class="footer-note" style="display:none"></div>
+            <div class="section">
+              <h2>Lista</h2>
+              <table class="table" id="tblColab">
+                <thead>
+                  <tr>
+                    <th>Matrícula</th><th>Nome</th><th>Profissão</th><th>Posto</th><th>Nr</th><th>ID.Posto</th><th>Lotação</th><th>Ocupação</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+              <div class="footer-note">Clique em uma linha para carregar e usar Alterar/Excluir.</div>
+            </div>
+          </section>
+
+          <!-- POSTOS -->
+          <section id="view-postos" class="view" style="display:none">
+            <h1 class="h1">Postos de Trabalho</h1>
+
+            <input type="hidden" id="pIdInterno" />
+
+            <div class="form-grid">
+              <div class="field">
+                <label>Posto (nome)</label>
+                <select id="pNome">
+                  <option value="">Selecione...</option>
+                  <option>AUXILIAR DE SAUDE BUCAL</option>
+                  <option>ENCARREGADO</option>
+                  <option>LIDER</option>
+                  <option>SERVENTE</option>
+                  <option>PEDAGOGO</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label>Nº Posto</label>
+                <input id="pNumero" type="number" min="1" />
+              </div>
+
+              <div class="field">
+                <label>Sequencial</label>
+                <input id="pSeq" type="number" min="1" value="1" />
+              </div>
+
+              <div class="field">
+                <label>Contrato</label>
+                <input id="pContrato" value="2" />
+              </div>
+
+              <div class="field">
+                <label>Ano</label>
+                <input id="pAno" type="number" value="2023" />
+              </div>
+
+              <div class="field">
+                <label>Turno</label>
+                <select id="pTurno">
+                  <option>Matutino</option>
+                  <option>Vespertino</option>
+                  <option>Integral</option>
+                  <option>Escala</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label>Status</label>
+                <select id="pStatus">
+                  <option>VAGO</option>
+                  <option>PREENCHIDO</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label>Lotação Macro</label>
+                <select id="pMacro">
+                  <option value="">Selecione...</option>
+                  <option>Tribunal</option>
+                  <option>Comarca</option>
+                </select>
+              </div>
+
+              <div class="field span-2">
+                <label>Lotação</label>
+                <input id="pLotacao" />
+              </div>
+
+              <div class="field span-2">
+                <label>Descritivo</label>
+                <input id="pDesc" />
+              </div>
+
+              <div class="field">
+                <label>Cidade</label>
+                <input id="pCidade" />
+              </div>
+
+              <div class="field span-2">
+                <label>ID.Posto (gerado)</label>
+                <input id="pIdPosto" disabled />
+              </div>
+            </div>
+
+            <div class="actions">
+              <button class="btn primary" id="btnSalvarPostoRPC" type="button">Salvar (RPC)</button>
+              <button class="btn" id="btnAlterarPosto" type="button">Alterar</button>
+              <button class="btn" id="btnExcluirPosto" type="button">Excluir</button>
+              <button class="btn" id="btnListarPostos" type="button">Listar</button>
+            </div>
+
+            <div class="section">
+              <h2>Lista</h2>
+              <table class="table" id="tblPostos">
+                <thead>
+                  <tr>
+                    <th>ID.Posto</th><th>Posto</th><th>Turno</th><th>Lotação Macro</th><th>Lotação</th><th>Cidade</th><th>Status</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+              <div class="footer-note">Clique em uma linha para carregar e usar Alterar/Excluir.</div>
+              <div id="msgPostos" class="footer-note" style="display:none"></div>
+            </div>
+          </section>
+
+          <!-- OCORRÊNCIAS -->
+          <section id="view-ocorrencias" class="view" style="display:none">
+            <h1 class="h1">Ocorrências / Afastamentos</h1>
+
+            <input type="hidden" id="oId" />
+
+            <div class="form-grid">
+              <div class="field">
+                <label>Matrícula</label>
+                <input id="oMatricula" maxlength="4" placeholder="0000" />
+              </div>
+
+              <div class="field span-2">
+                <label>Nome (auto)</label>
+                <input id="oNome" disabled />
+              </div>
+
+              <div class="field span-2">
+                <label>ID.Posto</label>
+                <input id="oIdPostoText" placeholder="Ex.: SERVENTE-100-1-2-2023" />
+              </div>
+
+              <div class="field">
+                <label>Substituição</label>
+                <select id="oTipoSub">
+                  <option value="">Selecione...</option>
+                  <option value="Tipo 1">Tipo 1 - Ausência do titular com volante</option>
+                  <option value="Tipo 2">Tipo 2 - Solicitação não realizada / posto descoberto</option>
+                  <option value="Tipo 3">Tipo 3 - Finais de semana e feriados</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label>Início</label>
+                <input id="oIni" type="date" />
+              </div>
+
+              <div class="field">
+                <label>Fim</label>
+                <input id="oFim" type="date" />
+              </div>
+
+              <div class="field">
+                <label>Total dias (auto)</label>
+                <input id="oTotalDias" disabled />
+              </div>
+
+              <div class="field span-2">
+                <label>Motivo</label>
+                <select id="oMotivo">
+                  <option>Acidente de trabalho</option>
+                  <option>Ausência legal por morte de familiar</option>
+                  <option>Ausência por doença</option>
+                  <option>Falta sem justificativa</option>
+                  <option>Férias</option>
+                  <option>Licença maternidade</option>
+                  <option>Outros</option>
+                  <option>Posto sem Titular</option>
+                  <option>Posto vago - Opção da Unidade Judiciária</option>
+                  <option>Substituindo outro Posto</option>
+                </select>
+              </div>
+
+              <div class="field span-2">
+                <label>Substituto</label>
+                <input id="oSubstituto" placeholder="Nome do substituto (quando houver)" />
+              </div>
+            </div>
+
+            <div class="actions">
+              <button class="btn primary" id="btnSalvarOcorrenciaRPC">Salvar</button>
+              <button class="btn" id="btnListarOcorrencias">Listar</button>
+            </div>
+
+            <div class="section">
+              <h2>Registros</h2>
+              <table class="table" id="tblOcorrencias">
+                <thead>
+                  <tr>
+                    <th>Nº</th><th>Matrícula</th><th>Nome</th><th>ID.Posto</th><th>Motivo</th><th>Período</th><th>Total</th><th>Substituição</th><th>Substituto</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- IMPORTAÇÃO -->
+          <section id="view-importacao" class="view" style="display:none">
+            <h1 class="h1">Importação / Exportação</h1>
+
+            <div class="section">
+              <h2>Templates (CSV)</h2>
+              <div class="form-grid">
+                <div class="field">
+                  <label>&nbsp;</label>
+                  <button class="btn" id="btnTplColab">Baixar template • Colaboradores</button>
+                </div>
+                <div class="field">
+                  <label>&nbsp;</label>
+                  <button class="btn" id="btnTplPostos">Baixar template • Postos</button>
+                </div>
+                <div class="field">
+                  <label>&nbsp;</label>
+                  <button class="btn" id="btnTplOcorr">Baixar template • Ocorrências</button>
+                </div>
+                <div class="field span-4">
+                  <div class="footer-note">Os templates são CSV com cabeçalho (separador “;”).</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="section">
+              <h2>Importar (CSV/Excel)</h2>
+              <div class="form-grid">
+                <div class="field span-3">
+                  <label>Arquivo</label>
+                  <input type="file" id="fileImport" accept=".csv,.xlsx,.xls" />
+                </div>
+                <div class="field">
+                  <label>&nbsp;</label>
+                  <button class="btn primary" id="btnImportar">Importar (lote)</button>
+                </div>
+                <div class="field">
+                  <label>&nbsp;</label>
+                  <button class="btn" id="btnExportar">Exportar (CSV)</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- RELATÓRIOS -->
+          <section id="view-relatorios" class="view" style="display:none">
+            <h1 class="h1">Relatórios</h1>
+
+            <div class="form-grid">
+              <div class="field">
+                <label>Filtrar por</label>
+                <select id="rFiltroTipo">
+                  <option value="matricula">Matrícula</option>
+                  <option value="lotacao">Lotação</option>
+                  <option value="periodo">Período</option>
+                </select>
+              </div>
+
+              <div class="field span-2" id="wrap-rMatricula">
+                <label>Matrícula</label>
+                <input id="rMatricula" maxlength="4" placeholder="0000" />
+              </div>
+
+              <div class="field span-2" id="wrap-rLotacao" style="display:none">
+                <label>Lotação</label>
+                <input id="rLotacao" placeholder="Ex.: Fórum / Unidade / Setor" />
+              </div>
+
+              <div class="field" id="wrap-rIni" style="display:none">
+                <label>Início</label>
+                <input id="rIni" type="date" />
+              </div>
+
+              <div class="field" id="wrap-rFim" style="display:none">
+                <label>Fim</label>
+                <input id="rFim" type="date" />
+              </div>
+
+              <div class="field">
+                <label>&nbsp;</label>
+                <button class="btn primary" id="btnGerarRelatorio">Gerar</button>
+              </div>
+            </div>
+
+            <div class="section">
+              <h2>Ocorrências (com filtros)</h2>
+              <table class="table" id="tblRelatorio">
+                <thead>
+                  <tr>
+                    <th>Nº</th><th>Matrícula</th><th>Nome</th><th>Lotação</th><th>ID.Posto</th><th>Motivo</th><th>Período</th><th>Total dias</th><th>Substituição</th><th>Substituto</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </section>
+
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script src="./env.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./js/supabaseClient.js"></script>
+  <script src="./js/app.js"></script>
+</body>
+</html>

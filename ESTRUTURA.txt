@@ -1,0 +1,13 @@
+vmapp/
+  index.html
+  env.js
+  css/
+    app.css
+  js/
+    supabaseClient.js
+    app.js
+  sql/
+    01_schema.sql
+    02_rpcs.sql
+    03_constraints_fechamento.sql
+    04_patch_atualizacoes.sql
